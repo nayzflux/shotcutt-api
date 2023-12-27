@@ -1,0 +1,29 @@
+{
+  "name": "shotcutt-api",
+  "version": "1.0.0",
+  "description": "API for ShotCutt web app",
+  "main": "src/app.ts",
+  "scripts": {
+    "run": "tsc && node dist/app.js",
+    "dev": "ts-node src/app.ts",
+    "build": "tsc --build"
+  },
+  "keywords": [
+    "shotcutt",
+    "api"
+  ],
+  "author": "nayzflux",
+  "license": "ISC",
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "multer": "^1.4.5-lts.1"
+  }
+}
