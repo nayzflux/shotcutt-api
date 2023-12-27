@@ -9,3 +9,47 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id String @id @default(cuid())
+
+  username       String
+  name           String
+  email          String  @unique
+  password       String?
+  provider_id    String
+  provider_name  String
+  is_social_auth Boolean
+
+  videos Video[]
+
+  @@unique([provider_id, provider_name])
+}
+
+model Video {
+  id String @id @default(cuid())
+
+  name       String
+  url        String
+  scene_urls String[]
+  format     String
+  size       Int
+  status     VideoStatus
+
+  user    User   @relation(fields: [user_id], references: [id])
+  user_id String
+}
+
+enum VideoStatus {
+  WAITING
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
+model Session {
+  id        String   @id
+  sid       String   @unique
+  data      String
+  expiresAt DateTime
+}
