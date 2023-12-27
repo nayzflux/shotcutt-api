@@ -3,7 +3,7 @@ import authRoutes from "./authRoutes";
 import {
   doUserOwnRessource,
   isUserAdmin,
-} from "../middlewares/authorizationMiddleware";
+} from "../middlewares/permissionMiddleware";
 
 import { Router } from "express";
 import {

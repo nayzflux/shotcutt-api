@@ -1,6 +1,6 @@
 import { z } from "zod";
 
 export const updateUserSchema = z.object({
-  username: z.string(),
-  name: z.string(),
+  username: z.string().optional(),
+  name: z.string().optional(),
 });
