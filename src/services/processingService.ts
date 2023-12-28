@@ -3,6 +3,7 @@ import { exec } from "node:child_process";
 import { prisma } from "../lib/prisma";
 import fs from "node:fs";
 import { io } from "../app";
+import { createZip } from "./zipServices";
 
 export const process = async (video: Video, filename: string) => {
   await prisma.video.update({
@@ -33,6 +34,8 @@ export const process = async (video: Video, filename: string) => {
 
       if (stdout) {
         console.log(`[PROCESSING] Command output`);
+
+        createZip(outputFolder, video.id);
 
         const sceneFile = fs.readdirSync(outputFolder);
 

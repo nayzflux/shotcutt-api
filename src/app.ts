@@ -115,6 +115,7 @@ app.use("/api", routes);
 // Serve video
 // TODO: Authorization
 app.use("/public/videos", express.static("uploads/videos/"));
+app.use("/public/zip", express.static("uploads/zip/"));
 
 httpServer.listen(PORT, () =>
   console.log(`Server is listening on port :${PORT}`)

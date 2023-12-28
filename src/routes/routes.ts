@@ -88,6 +88,6 @@ router.get("/videos", auth, findAllVideos);
 router.get("/videos/:id", auth, findVideo);
 router.delete("/videos/:id", auth, deleteVideo);
 
-router.use('/checkout', auth, checkoutRoutes)
+router.use("/checkout", auth, checkoutRoutes);
 
 export default router;

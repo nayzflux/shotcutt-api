@@ -17,8 +17,8 @@ model User {
   name           String
   email          String  @unique
   password       String?
-  provider_id    String
-  provider_name  String
+  provider_id    String?
+  provider_name  String?
   is_social_auth Boolean
 
   // Subscription

@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma";
 import { User } from "@prisma/client";
 import path from "node:path";
 import * as processingService from "../services/processingService";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
 export const createVideo: RequestHandler = async (req, res) => {
   const user = req.user as User;
@@ -62,16 +63,20 @@ export const deleteVideo: RequestHandler = async (req, res) => {
   const user = req.user as User;
   const { id } = req.params;
 
-  const video = await prisma.video.delete({
-    where: {
-      user_id: user.id,
-      id,
-    },
-  });
+  try {
+    const video = await prisma.video.delete({
+      where: {
+        user_id: user.id,
+        id,
+      },
+    });
 
-  if (!video) {
-    return res.sendStatus(404);
+    res.status(200).json({ video });
+  } catch (err) {
+    if (err instanceof PrismaClientKnownRequestError) {
+      if (err.code === "P2025") return res.sendStatus(404);
+    }
+
+    res.sendStatus(500)
   }
-
-  res.status(200).json({ video });
 };
