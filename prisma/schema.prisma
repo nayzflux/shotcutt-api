@@ -21,6 +21,11 @@ model User {
   provider_name  String
   is_social_auth Boolean
 
+  // Subscription
+  subscription_plan SubscriptionPlan?
+  subscription_start DateTime?
+  subscription_end DateTime?
+
   videos Video[]
 
   @@unique([provider_id, provider_name])
@@ -52,4 +57,10 @@ model Session {
   sid       String   @unique
   data      String
   expiresAt DateTime
+}
+
+enum SubscriptionPlan {
+  CLASSIC
+  PREMIUM
+  PRO
 }

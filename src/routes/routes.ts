@@ -20,6 +20,8 @@ import {
   deleteVideo,
 } from "../controllers/videoController";
 
+import checkoutRoutes from "./checkoutRoutes";
+
 import multer from "multer";
 import path from "node:path";
 
@@ -85,5 +87,7 @@ router.post("/videos", auth, upload.single("video"), createVideo);
 router.get("/videos", auth, findAllVideos);
 router.get("/videos/:id", auth, findVideo);
 router.delete("/videos/:id", auth, deleteVideo);
+
+router.use('/checkout', auth, checkoutRoutes)
 
 export default router;

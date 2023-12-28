@@ -15,7 +15,7 @@ export const createVideo: RequestHandler = async (req, res) => {
     data: {
       user_id: user.id,
       name: file.originalname,
-      url: `/uploads/videos/${file.filename}`,
+      url: `/public/videos/${file.filename}`,
       scene_urls: [],
       status: "WAITING",
       size: file.size,

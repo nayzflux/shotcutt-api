@@ -2,6 +2,7 @@ import { Video } from "@prisma/client";
 import { exec } from "node:child_process";
 import { prisma } from "../lib/prisma";
 import fs from "node:fs";
+import { io } from "../app";
 
 export const process = async (video: Video, filename: string) => {
   await prisma.video.update({
@@ -25,6 +26,8 @@ export const process = async (video: Video, filename: string) => {
           data: { status: "FAILED" },
         });
 
+        io.to(`user:${video.user_id}`).emit("video_process_failed");
+
         return;
       }
 
@@ -42,6 +45,8 @@ export const process = async (video: Video, filename: string) => {
           data: { status: "PROCESSED", scene_urls },
         });
 
+        io.to(`user:${video.user_id}`).emit("video_process_success");
+
         return;
       }
 
@@ -52,6 +57,8 @@ export const process = async (video: Video, filename: string) => {
           where: { id: video.id },
           data: { status: "FAILED" },
         });
+
+        io.to(`user:${video.user_id}`).emit("video_process_failed");
 
         return;
       }
