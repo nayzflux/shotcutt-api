@@ -24,6 +24,9 @@ import checkoutRoutes from "./checkoutRoutes";
 
 import multer from "multer";
 import path from "node:path";
+import { prisma } from "../lib/prisma";
+import { use } from "passport";
+import { User } from "@prisma/client";
 
 const router = Router();
 
@@ -57,20 +60,48 @@ const storage = multer.diskStorage({
   },
 });
 
+// Current allowed size in GB
+const CURRENT_ALLOWED_SIZE = 2;
+
+// Current max video count
+const CURRENT_MAX_VIDEO_COUNT = 10;
+
 const upload = multer({
   storage: storage,
   limits: {
     fileSize: 1 * 1024 * 1024 * 1024, // 1GB per file
   },
-  fileFilter: function (req, file, cb) {
-    // TODO: Check size by plan
-    // TODO: Check format by plan
+  fileFilter: async function (req, file, cb) {
+    // TODO: Check based on plan
+    // TODO: Video duration
+    // TODO: Video quality
+
+    // Check video size
+    if (file.size > CURRENT_ALLOWED_SIZE * 8) {
+      return cb(
+        new Error("Max size exceeded (" + CURRENT_ALLOWED_SIZE + "MB)")
+      );
+    }
+
+    // Check video number
+    const user = req.user as User;
+
+    const videoCount = await prisma.video.count({
+      where: {
+        user_id: user.id,
+      },
+    });
+
+    if (videoCount >= CURRENT_MAX_VIDEO_COUNT) {
+      return cb(new Error("Max video number reached"));
+    }
 
     console.log(file.size);
     console.log(file.mimetype);
 
     const filetypes = /mp4/;
     const mimetype = filetypes.test(file.mimetype);
+
     const extname = filetypes.test(
       path.extname(file.originalname).toLowerCase()
     );

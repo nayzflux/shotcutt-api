@@ -5,6 +5,9 @@ import path from "node:path";
 import * as processingService from "../services/processingService";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
+import fs from "node:fs";
+import { deleteFile } from "../services/deleteService";
+
 export const createVideo: RequestHandler = async (req, res) => {
   const user = req.user as User;
 
@@ -20,6 +23,7 @@ export const createVideo: RequestHandler = async (req, res) => {
       scene_urls: [],
       status: "WAITING",
       size: file.size,
+      filename: file.filename,
       format: path.extname(file.originalname),
     },
   });
@@ -68,15 +72,18 @@ export const deleteVideo: RequestHandler = async (req, res) => {
       where: {
         user_id: user.id,
         id,
+        status: "PROCESSED",
       },
     });
 
     res.status(200).json({ video });
+
+    deleteFile(video);
   } catch (err) {
     if (err instanceof PrismaClientKnownRequestError) {
       if (err.code === "P2025") return res.sendStatus(404);
     }
 
-    res.sendStatus(500)
+    res.sendStatus(500);
   }
 };

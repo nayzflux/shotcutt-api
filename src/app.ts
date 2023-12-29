@@ -14,6 +14,7 @@ import cors from "cors";
 import { Server } from "socket.io";
 import { createServer } from "http";
 import { User } from "@prisma/client";
+import rateLimit from "express-rate-limit";
 
 /**
  * Env variable
@@ -34,6 +35,9 @@ const io = new Server(httpServer, {
   },
 });
 
+// Trust the headers set by the reverse proxy
+app.set("trust proxy", 1);
+
 /**
  * Webhook
  */
@@ -50,6 +54,16 @@ app.use(
     credentials: true,
   })
 );
+
+// Define the rate limit options
+const limiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 500, // limit each IP to 100 requests per windowMs
+  message: "Too many requests from this IP, please try again later.",
+});
+
+// Apply the rate limiter to all requests
+// app.use(limiter);
 
 app.use(bodyParser.json({ limit: "1mb" }));
 app.use(bodyParser.urlencoded({ extended: true }));

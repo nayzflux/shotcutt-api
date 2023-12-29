@@ -40,12 +40,14 @@ export const register: RequestHandler = async (req, res) => {
       },
     });
 
-    res.status(201).json({ user });
+    // res.status(201).json({ user });
+
+    res.redirect(307, "/api/auth/login");
   } catch (err) {
     if (err instanceof PrismaClientKnownRequestError) {
       if (err.code == "P2002") {
         return res
-          .status(400)
+          .status(409)
           .json({ message: "Username or email is already used!" });
       }
     }

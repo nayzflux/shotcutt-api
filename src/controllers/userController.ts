@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { updateUserSchema } from "../schemas/userSchema";
+import * as fileService from "../services/deleteService";
 
 export const findAllUsers = async (req: Request, res: Response) => {
   const users = await prisma.user.findMany({
@@ -13,6 +14,7 @@ export const findAllUsers = async (req: Request, res: Response) => {
       provider_name: true,
       is_social_auth: true,
       password: false,
+      avatar_url: true,
     },
   });
 
@@ -36,6 +38,7 @@ export const findUser = async (req: Request, res: Response) => {
       id: true,
       username: true,
       password: false,
+      avatar_url: true,
     },
   });
 
@@ -65,6 +68,7 @@ export const updateUser = async (req: Request, res: Response) => {
       provider_name: true,
       is_social_auth: true,
       password: false,
+      avatar_url: true,
     },
   });
 
@@ -87,8 +91,15 @@ export const deleteUser = async (req: Request, res: Response) => {
       provider_name: true,
       is_social_auth: true,
       password: false,
+      avatar_url: true,
+      videos: true
     },
   });
 
   res.status(200).json({ user });
+
+  // Delete all user video files
+  for (const vid of user.videos) {
+    fileService.deleteFile(vid);
+  }
 };

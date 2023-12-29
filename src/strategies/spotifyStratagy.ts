@@ -1,4 +1,4 @@
-import passport from "passport";
+import passport, { use } from "passport";
 import { Strategy } from "passport-spotify";
 import { prisma } from "../lib/prisma";
 import { Prisma } from "@prisma/client";
@@ -19,7 +19,8 @@ passport.use(
     async function (accessToken, refreshToken, expires_in, profile, done) {
       const email = profile.emails?.[0].value;
 
-      // console.log(profile);
+      //@ts-ignore
+      const avatar_url = profile.photos[0].value;
 
       if (!email) return done(new Error("Email is required"));
 
@@ -39,6 +40,8 @@ passport.use(
             email: email,
 
             password: null,
+
+            avatar_url: avatar_url,
 
             provider_id: profile.id,
             provider_name: "SPOTIFY",
