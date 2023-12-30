@@ -163,7 +163,7 @@ app.post("/webhook/process", upload.single("file"), async (req, res) => {
   const { event, video_id, scenes } = req.body;
 
   console.log(event);
-  
+
   try {
     if (event === "PROCESS_FAILED") {
       const video = await prisma.video.update({

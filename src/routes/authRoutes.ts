@@ -8,6 +8,7 @@ import bcrypt from "bcrypt";
 import { Strategy as DiscordStrategy } from "passport-discord";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { Strategy as GitHubStrategy, Profile } from "passport-github2";
+import { z } from "zod";
 
 const router = Router();
 
@@ -56,15 +57,24 @@ passport.deserializeUser(async function (_id, done) {
  * Email & Password Auth
  */
 
+const signInSchema = z.object({
+  email: z.string().email().max(256),
+  password: z.string(),
+});
+
 passport.use(
   new LocalStrategy(
     {
       passReqToCallback: true,
     },
-    async function verify(req: any, username: any, password: any, cb: any) {
+    async function verify(req: any, username: any, _password: any, cb: any) {
       // console.log(req.body);
 
-      const { email } = req.body;
+      const body = signInSchema.safeParse(req.body);
+
+      if (!body.success) return cb(new Error("Bad request"));
+
+      const { email, password } = body.data;
 
       const user = await prisma.user.findFirst({
         where: {
