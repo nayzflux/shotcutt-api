@@ -1,34 +1,7 @@
-import fs from "node:fs";
-import archiver from "archiver";
+import AdmZip from "adm-zip";
+import * as fs from "fs";
 
-export const createZip = (folder: string, id: string) => {
-  const sourceFolder = folder;
-  const zipFilePath = `./uploads/zip/${id}.zip`;
-
-  // Créer une archive
-  const output = fs.createWriteStream(zipFilePath);
-  const archive = archiver("zip", {
-    zlib: { level: 9 }, // Compression maximale
-  });
-
-  output.on("close", () => {
-    console.log(`Archive créée: ${zipFilePath}`);
-  });
-
-  archive.on("warning", (err) => {
-    if (err.code === "ENOENT") {
-      console.warn(err);
-    } else {
-      throw err;
-    }
-  });
-
-  archive.on("error", (err) => {
-    throw err;
-  });
-
-  // Ajouter le contenu du dossier source à l'archive
-  archive.pipe(output);
-  archive.directory(sourceFolder, false);
-  archive.finalize();
+export const extractZip = (zipFilePath: string, extractTo: string) => {
+  const zip = new AdmZip(zipFilePath);
+  zip.extractAllTo(extractTo, true);
 };

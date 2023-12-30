@@ -19,7 +19,7 @@ export const createVideo: RequestHandler = async (req, res) => {
     data: {
       user_id: user.id,
       name: file.originalname,
-      url: `/public/videos/${file.filename}`,
+      url: `/public/originals/${file.filename}`,
       scene_urls: [],
       status: "WAITING",
       size: file.size,
@@ -28,7 +28,13 @@ export const createVideo: RequestHandler = async (req, res) => {
     },
   });
 
-  processingService.process(video, file.filename);
+  // Rename file for easier usage
+  fs.renameSync(
+    `uploads/originals/${req.file?.filename}`,
+    "uploads/originals/" + video.id + ".mp4"
+  );
+
+  processingService.processVideo(video, file.filename);
 
   res.status(201).json({ video });
 };
@@ -75,6 +81,14 @@ export const deleteVideo: RequestHandler = async (req, res) => {
         status: "PROCESSED",
       },
     });
+
+    // if (video.status === "WAITING") {
+    //   return res.sendStatus(409);
+    // }
+
+    // if (video.status === "PROCESSING") {
+    //   return res.sendStatus(409);
+    // }
 
     res.status(200).json({ video });
 

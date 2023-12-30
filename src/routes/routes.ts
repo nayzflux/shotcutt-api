@@ -25,7 +25,6 @@ import checkoutRoutes from "./checkoutRoutes";
 import multer from "multer";
 import path from "node:path";
 import { prisma } from "../lib/prisma";
-import { use } from "passport";
 import { User } from "@prisma/client";
 
 const router = Router();
@@ -52,7 +51,7 @@ router.delete("/users/:id", auth, doUserOwnRessource, deleteUser);
 // Configuration de Multer pour le stockage des vidéos
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "uploads/videos/");
+    cb(null, "uploads/originals/");
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -69,7 +68,7 @@ const CURRENT_MAX_VIDEO_COUNT = 10;
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 1 * 1024 * 1024 * 1024, // 1GB per file
+    fileSize: 10 * 1024 * 1024 * 1024, // 10GB per file
   },
   fileFilter: async function (req, file, cb) {
     // TODO: Check based on plan
@@ -77,9 +76,9 @@ const upload = multer({
     // TODO: Video quality
 
     // Check video size
-    if (file.size > CURRENT_ALLOWED_SIZE * 8) {
+    if (file.size > CURRENT_ALLOWED_SIZE * 1000 * 1000 * 1000 * 8) {
       return cb(
-        new Error("Max size exceeded (" + CURRENT_ALLOWED_SIZE + "MB)")
+        new Error("Max size exceeded (" + CURRENT_ALLOWED_SIZE + "GB)")
       );
     }
 

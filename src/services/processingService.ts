@@ -1,70 +1,64 @@
 import { Video } from "@prisma/client";
-import { exec } from "node:child_process";
+
 import { prisma } from "../lib/prisma";
-import fs from "node:fs";
 import { io } from "../app";
-import { createZip } from "./zipServices";
+import { retry } from "@lifeomic/attempt";
+import { readFile } from "node:fs/promises";
 
-export const process = async (video: Video, filename: string) => {
-  await prisma.video.update({
-    where: { id: video.id },
-    data: { status: "PROCESSING" },
-  });
+export const processVideo = async (video: Video, filename: string) => {
+  // Remplacez ces valeurs par les données appropriées
+  const apiUrl = process.env.PROCESS_URL!; // L'URL de l'API de téléchargement
+  const filePath = `${__dirname}/../../uploads/originals/${video.id}.mp4`; // Le chemin vers votre fichier
+  const videoId = video.id; // L'identifiant de la vidéo
 
-  const inputFile = `./uploads/videos/${filename}`;
-  const outputFolder = `./uploads/videos/processed/${video.id}`;
+  // Créez un objet FormData
+  const formData = new FormData();
 
-  console.error(`[PROCESSING] Processing video... `);
+  // Ajoutez le fichier et le video_id au formulaire
+  formData.set("video_id", videoId);
+  formData.set("video", new Blob([await readFile(filePath)]));
 
-  exec(
-    `scenedetect -i "${inputFile}" -o "${outputFolder}" split-video `,
-    async (error, stdout, stderr) => {
-      if (error) {
-        console.error(`[PROCESSING] Error executing command`, error.message);
+  console.log("[PROCESS SERVICE] Requesting video processing...");
 
-        await prisma.video.update({
-          where: { id: video.id },
-          data: { status: "FAILED" },
+  /**
+   * Request video process
+   */
+
+  try {
+    const response = await retry(
+      async (context) => {
+        // console.log(context.attemptNum, context.attemptsRemaining);
+
+        return fetch(apiUrl, {
+          method: "POST",
+          body: formData,
         });
-
-        io.to(`user:${video.user_id}`).emit("video_process_failed");
-
-        return;
+      },
+      {
+        delay: 2000,
+        maxAttempts: 10,
+        factor: 2,
+        maxDelay: 10000,
       }
+    );
 
-      if (stdout) {
-        console.log(`[PROCESSING] Command output`);
+    console.log("[PROCESS SERVICE] Video processing request success");
 
-        createZip(outputFolder, video.id);
+    await prisma.video.update({
+      where: { id: video.id },
+      data: { status: "PROCESSING" },
+    });
 
-        const sceneFile = fs.readdirSync(outputFolder);
+    io.to(`user:${video.user_id}`).emit("video_process_start");
+  } catch (err) {
+    console.error("[PROCESS SERVICE] Video processing request failed");
+    console.error(err);
 
-        const scene_urls = sceneFile.map(
-          (file) => `/public/videos/processed/${video.id}/${file}`
-        );
+    await prisma.video.update({
+      where: { id: video.id },
+      data: { status: "FAILED" },
+    });
 
-        await prisma.video.update({
-          where: { id: video.id },
-          data: { status: "PROCESSED", scene_urls },
-        });
-
-        io.to(`user:${video.user_id}`).emit("video_process_success");
-
-        return;
-      }
-
-      if (stderr) {
-        console.error(`[PROCESSING] Command stderr`);
-
-        await prisma.video.update({
-          where: { id: video.id },
-          data: { status: "FAILED" },
-        });
-
-        io.to(`user:${video.user_id}`).emit("video_process_failed");
-
-        return;
-      }
-    }
-  );
+    io.to(`user:${video.user_id}`).emit("video_process_failed");
+  }
 };

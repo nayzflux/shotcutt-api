@@ -30,6 +30,7 @@
     "@types/passport-local": "^1.0.38",
     "@types/passport-spotify": "^2.0.4",
     "@types/passport.socketio": "^3.7.10",
+    "@types/unzipper": "^0.10.9",
     "dotenv": "^16.3.1",
     "nodemon": "^3.0.2",
     "prisma": "^5.7.1",
@@ -37,9 +38,11 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@lifeomic/attempt": "^3.0.3",
     "@prisma/client": "^5.7.1",
     "@quixo3/prisma-session-store": "^3.1.13",
-    "archiver": "^6.0.1",
+    "@types/adm-zip": "^0.5.5",
+    "adm-zip": "^0.5.10",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.6",
@@ -53,8 +56,6 @@
     "passport-github2": "^0.1.12",
     "passport-local": "^1.0.0",
     "passport-spotify": "^2.0.0",
-    "passport.socketio": "^3.7.0",
-    "session.socket.io": "^0.2.1",
     "socket.io": "^4.7.2",
     "stripe": "^14.10.0",
     "zod": "^3.22.4"

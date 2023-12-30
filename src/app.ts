@@ -1,5 +1,7 @@
-import dotenv from "dotenv";
-dotenv.config();
+if (process.env.NODE_ENV !== "production") {
+  const dotenv = require("dotenv");
+  dotenv.config();
+}
 
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
@@ -15,6 +17,9 @@ import { Server } from "socket.io";
 import { createServer } from "http";
 import { User } from "@prisma/client";
 import rateLimit from "express-rate-limit";
+import path from "path";
+import multer from "multer";
+import { extractZip } from "./services/zipServices";
 
 /**
  * Env variable
@@ -41,7 +46,6 @@ app.set("trust proxy", 1);
 /**
  * Webhook
  */
-// app.use()
 
 /**
  * Middleware
@@ -128,8 +132,77 @@ app.use("/api", routes);
 
 // Serve video
 // TODO: Authorization
-app.use("/public/videos", express.static("uploads/videos/"));
-app.use("/public/zip", express.static("uploads/zip/"));
+app.use("/public", express.static("uploads/"));
+
+/**
+ * Webhook - Processing service
+ */
+
+// Configuration de Multer pour le stockage des vidéos
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/scenes");
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
+  },
+});
+
+const upload = multer({
+  storage: storage,
+  fileFilter: async function (req, file, cb) {
+    if (req.body.secret === process.env.PROCESS_WH_SECRET) {
+      return cb(null, true);
+    }
+
+    cb(new Error("Invalid secret"));
+  },
+});
+
+app.post("/webhook/process", upload.single("file"), async (req, res) => {
+  const { event, video_id, scenes } = req.body;
+
+  console.log(event);
+  
+  try {
+    if (event === "PROCESS_FAILED") {
+      const video = await prisma.video.update({
+        where: { id: video_id },
+        data: {
+          status: "FAILED",
+        },
+      });
+
+      io.to(`user:${video.user_id}`).emit("video_process_failed");
+
+      console.log("Video process failed");
+    }
+
+    if (event === "PROCESS_SUCCEED") {
+      const video = await prisma.video.update({
+        where: { id: video_id },
+        data: {
+          status: "PROCESSED",
+          scene_urls: scenes.map((_: any, i: number) => "Scene" + i),
+        },
+      });
+
+      io.to(`user:${video.user_id}`).emit("video_process_success");
+
+      extractZip(
+        `uploads/scenes/${video.id}.zip`,
+        `uploads/scenes/${video.id}`
+      );
+
+      console.log("Video process succeed");
+
+      res.sendStatus(200);
+    }
+  } catch (err) {
+    console.error(err);
+    res.sendStatus(500);
+  }
+});
 
 httpServer.listen(PORT, () =>
   console.log(`Server is listening on port :${PORT}`)
