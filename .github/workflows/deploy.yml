@@ -25,5 +25,5 @@ jobs:
         envs: DIRECTORY
         script: |
           cd $DIRECTORY
-          docker pull nayzbysodium/shotcutt-api:latest
+          docker compose pull
           docker compose up --no-deps -d api
