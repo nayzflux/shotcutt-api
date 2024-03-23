@@ -1,66 +1,92 @@
 version: "3"
 
 volumes:
-  db-data:
-  api-data:
+    db-data:
+    api-data:
+    rabbitmq-data:
 
 networks:
-  private:
-  webgateway:
-    external: true
-    name: webgateway
+    private:
+    webgateway:
+        # external: true
+        # name: webgateway 
 
 services:
-  # API
-  api:
-    image: shotcutt-api:latest
-    hostname: api
-    expose:
-      - 5000/tcp
-    # ports:
-    #   - 5000:5000
-    env_file: .env
-    volumes:
-      - api-data:/app/uploads
-    depends_on:
-      - db
-      - processing
-    restart: on-failure
-    networks:
-      - webgateway
-      - private
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.shotcutt-api.rule=Host(`api.shotcutt.nayz.fr`)
-      - traefik.http.routers.shotcutt-api.entrypoints=websecure
-      - traefik.http.routers.shotcutt-api.service=shotcutt-api
-      - traefik.http.services.shotcutt-api.loadbalancer.server.port=5000
-      - traefik.http.routers.shotcutt-api.tls.certresolver=production
+    # API
+    api:
+        image: nayzbysodium/shotcutt-api:latest
+        hostname: api
+        expose:
+            - 5000/tcp
+        env_file: .env
+        volumes:
+            - api-data:/app/uploads
+        depends_on:
+            - db
+            - rabbitmq
+            - redis
+        restart: always
+        networks:
+            # - webgateway
+            - private
+        labels:
+            - "logging=promtail"
+            - "logging_jobname=containerlogs"
+            - "traefik.enable=true"
+            - "traefik.http.routers.shotcutt-api.rule=Host(`api.shotcutt.nayz.fr`)"
+            - "traefik.http.routers.shotcutt-api.entrypoints=websecure"
+            # - "traefik.http.routers.shotcutt-api.entrypoints=web"
+            # - "traefik.http.routers.shotcutt-api.service=shotcutt-api"
+            - "traefik.http.services.shotcutt-api.loadbalancer.server.port=5000"
+            - "traefik.http.routers.shotcutt-api.tls.certresolver="
+            - "traefik.http.routers.shotcutt-api.tls=true"
 
-  # Service de traitement
-  processing:
-    image: shotcutt-processing:latest
-    hostname: process
-    expose:
-      - 8000/tcp
-    # ports:
-    #   - 8000:8000
-    env_file: .env
-    restart: on-failure
-    networks:
-      - private
+    # # Service de traitement
+    processing:
+        image: nayzbysodium/shotcutt-processing:latest
+        hostname: process
+        depends_on:
+            - rabbitmq
+        expose:
+            - 8000/tcp
+        env_file: .env
+        restart: always
+        networks:
+            - private
 
-  # Database
-  db:
-    image: postgres:latest
-    hostname: pg
-    expose:
-      - 5432/tcp
-    # ports:
-    #   - 5432:5432
-    env_file: .env
-    volumes:
-      - db-data:/var/lib/postgresql/data
-    restart: on-failure
-    networks:
-      - private
+    # Database
+    db:
+        image: postgres:latest
+        hostname: db
+        expose:
+            - 5432/tcp
+        env_file: .env
+        volumes:
+            - db-data:/var/lib/postgresql/data
+        restart: always
+        networks:
+            - private
+
+    # Redis
+    redis:
+        image: redis:latest
+        hostname: redis
+        restart: always
+        expose:
+            - 6379/tcp
+        env_file: .env
+        networks:
+            - private
+
+    # Queue
+    rabbitmq:
+        image: rabbitmq:latest
+        hostname: rabbitmq
+        restart: always
+        expose:
+            - 5672/tcp
+        env_file: .env
+        networks:
+            - private
+        volumes:
+            - rabbitmq-data:/var/lib/rabbitmq
