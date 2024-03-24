@@ -44,6 +44,7 @@ model Video {
   format     String
   size       Int
   status     VideoStatus
+  preset VideoPreset @default(MEDIUM)
   filename   String
 
   updated_at DateTime @updatedAt
@@ -51,6 +52,15 @@ model Video {
 
   user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
   user_id String
+}
+
+enum VideoPreset {
+  SLOW
+  MEDIUM
+  FAST
+  FASTER
+  VERYFAST
+  SUPERFAST
 }
 
 enum VideoStatus {

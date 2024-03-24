@@ -1,5 +1,3 @@
-version: "3"
-
 volumes:
     db-data:
     api-data:
@@ -7,17 +5,19 @@ volumes:
 
 networks:
     private:
-    webgateway:
-        # external: true
-        # name: webgateway 
+    # webgateway:
+    #     external: true
+    #     name: webgateway
 
 services:
     # API
     api:
-        image: nayzbysodium/shotcutt-api:latest
+        image: shotcutt-api:latest
         hostname: api
-        expose:
-            - 5000/tcp
+        # expose:
+        #     - 5000/tcp
+        ports:
+            - 5000:5000
         env_file: .env
         volumes:
             - api-data:/app/uploads
@@ -35,8 +35,6 @@ services:
             - "traefik.enable=true"
             - "traefik.http.routers.shotcutt-api.rule=Host(`api.shotcutt.nayz.fr`)"
             - "traefik.http.routers.shotcutt-api.entrypoints=websecure"
-            # - "traefik.http.routers.shotcutt-api.entrypoints=web"
-            # - "traefik.http.routers.shotcutt-api.service=shotcutt-api"
             - "traefik.http.services.shotcutt-api.loadbalancer.server.port=5000"
             - "traefik.http.routers.shotcutt-api.tls.certresolver="
             - "traefik.http.routers.shotcutt-api.tls=true"
@@ -53,6 +51,9 @@ services:
         restart: always
         networks:
             - private
+        labels:
+            - "logging=promtail"
+            - "logging_jobname=containerlogs"
 
     # Database
     db:
@@ -60,6 +61,8 @@ services:
         hostname: db
         expose:
             - 5432/tcp
+        # ports:
+        #     - 5432:5432
         env_file: .env
         volumes:
             - db-data:/var/lib/postgresql/data
@@ -72,6 +75,8 @@ services:
         image: redis:latest
         hostname: redis
         restart: always
+        # ports:
+        #     - 6379:6379
         expose:
             - 6379/tcp
         env_file: .env
@@ -83,6 +88,8 @@ services:
         image: rabbitmq:latest
         hostname: rabbitmq
         restart: always
+        # ports:
+        #     - 5672:5672
         expose:
             - 5672/tcp
         env_file: .env

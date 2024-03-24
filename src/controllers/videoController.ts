@@ -12,6 +12,22 @@ export const createVideo: RequestHandler = async (req, res) => {
     const user = req.user as User;
 
     const file = req.file;
+    const preset = req.query.preset as string;
+
+    console.log(req.query);
+
+    if (!preset) return res.sendStatus(400);
+
+    if (
+        !(
+            preset === "MEDIUM" ||
+            preset === "FAST" ||
+            preset === "FASTER" ||
+            preset === "VERYFAST" ||
+            preset === "SUPERFAST"
+        )
+    )
+        return res.sendStatus(400);
 
     if (!file) return res.sendStatus(400);
 
@@ -23,6 +39,7 @@ export const createVideo: RequestHandler = async (req, res) => {
             scene_urls: [],
             status: "WAITING",
             size: file.size,
+            preset: preset,
             filename: file.filename,
             format: path.extname(file.originalname),
         },
