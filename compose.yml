@@ -41,7 +41,7 @@ services:
 
     # # Service de traitement
     processing:
-        image: nayzbysodium/shotcutt-processing:latest
+        image: shotcutt-processing:latest
         hostname: process
         depends_on:
             - rabbitmq
